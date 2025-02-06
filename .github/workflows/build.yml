@@ -24,6 +24,7 @@ jobs:
       
     - name: tar
       run: |
+         cd vcnet
          mkdir ipptool
          copy packages\libressl_native.redist.3.7.3\build\native\bin\x64\Debug\ssl.dll ipptool
          copy packages\libressl_native.redist.3.7.3\build\native\bin\x64\Debug\crypto.dll ipptool
@@ -34,7 +35,7 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         files: |
-            ipptool.zip
+            vcnet/ipptool.zip
         draft: false
         prerelease: false
         tag_name: ${{ github.ref_name }}
