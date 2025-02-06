@@ -1,4 +1,4 @@
-name: Build and Test
+name: Build
 
 on:
   push:
@@ -8,74 +8,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-linux-openssl:
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout libcups
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-    - name: Update Build Environment
-      run: sudo apt-get update --fix-missing -y
-    - name: Install Prerequisites
-      run: sudo apt-get install -y avahi-daemon libavahi-client-dev libssl-dev libpam-dev libusb-1.0-0-dev zlib1g-dev
-    - name: Start Avahi
-      run: sudo systemctl start avahi-daemon
-    - name: Configure libcups
-      env:
-        CC: /usr/bin/gcc
-      run: ./configure --enable-debug --enable-debug-printfs --enable-maintainer --with-tls=openssl || (cat config.log; pkg-config --list-all; exit 1)
-    - name: Make libcups
-      run: make
-    - name: Test libcups
-      run: make test || cat cups/test.log
-
-  build-linux-gnutls:
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout libcups
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-    - name: Update Build Environment
-      run: sudo apt-get update --fix-missing -y
-    - name: Install Prerequisites
-      run: sudo apt-get install -y avahi-daemon libavahi-client-dev libgnutls28-dev libpam-dev libusb-1.0-0-dev zlib1g-dev
-    - name: Start Avahi
-      run: sudo systemctl start avahi-daemon
-    - name: Configure libcups
-      env:
-        CC: /usr/bin/gcc
-      run: ./configure --enable-debug --enable-debug-printfs --enable-maintainer --with-tls=gnutls || (cat config.log; pkg-config --list-all; exit 1)
-    - name: Make libcups
-      run: make
-    - name: Test libcups
-      run: make test || cat cups/test.log
-
-  build-macos:
-
-    runs-on: macos-latest
-
-    steps:
-    - name: Checkout libcups
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-    - name: Configure libcups
-      run: ./configure --enable-debug --enable-debug-printfs --enable-maintainer || (cat config.log; pkg-config --list-all; exit 1)
-    - name: Make libcups
-      run: make
-    - name: Test libcups
-      run: make test || cat cups/test.log
-
   build-windows:
-
     runs-on: windows-latest
-
     steps:
     - name: Checkout libcups
       uses: actions/checkout@v4
@@ -87,3 +21,20 @@ jobs:
       run: cd vcnet; nuget restore libcups.sln; cd ../pdfio; nuget restore
     - name: Build libcups
       run: cd vcnet; msbuild libcups.sln
+      
+    - name: tar
+      run: |
+         mkdir ipptool
+         copy packages\libressl_native.redist.3.7.3\build\native\bin\x64\Debug\ssl.dll ipptool
+         copy packages\libressl_native.redist.3.7.3\build\native\bin\x64\Debug\crypto.dll ipptool
+         copy x64\Debug\*.dll ipptool
+         tar cvf ipptool.zip ipptool
+
+    - name: upload release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+            ipptool.zip
+        draft: false
+        prerelease: false
+        tag_name: ${{ github.ref_name }}
