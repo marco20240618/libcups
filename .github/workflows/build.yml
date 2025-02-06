@@ -29,6 +29,7 @@ jobs:
          copy packages\libressl_native.redist.3.7.3\build\native\bin\x64\Debug\ssl.dll ipptool
          copy packages\libressl_native.redist.3.7.3\build\native\bin\x64\Debug\crypto.dll ipptool
          copy x64\Debug\*.dll ipptool
+         copy x64\Debug\*.exe ipptool
          tar cvf ipptool.zip ipptool
 
     - name: upload release
